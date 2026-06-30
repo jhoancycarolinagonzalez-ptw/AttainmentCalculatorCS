@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS Ops · Attainment Calculator · July 2026</title>
+<style>
+  :root {
+    --navy: #0b1f3a;
+    --bg: #071628;
+    --surface: #0d2440;
+    --surface2: #112a4a;
+    --green: #00a85a;
+    --green-light: rgba(0,168,90,0.15);
+    --green-dark: #00d471;
+    --red: #f87171;
+    --red-light: rgba(248,113,113,0.12);
+    --amber: #fbbf6a;
+    --amber-light: rgba(251,191,106,0.12);
+    --blue: #7ec8f4;
+    --blue-light: rgba(126,200,244,0.12);
+    --gray: #5a7a9a;
+    --gray-light: #112a4a;
+    --border: #1a3a5c;
+    --text: #c8daea;
+    --text-dim: #4a6880;
+    --white: #e8f0f8;
+    --shadow: 0 2px 12px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* ── HEADER ── */
+  .header { background: #061220; border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .header-brand { color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+  .header-title { color: var(--white); font-size: 18px; font-weight: 700; margin-top: 2px; }
+  .header-right { color: var(--gray); font-size: 12px; text-align: right; line-height: 1.6; }
+
+  /* ── CONTROLS BAR ── */
+  .controls { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .ctrl-group { display: flex; align-items: center; gap: 8px; }
+  .ctrl-group label { font-size: 11px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
+  select, input[type="text"] { border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; color: var(--text); background: var(--surface2); outline: none; cursor: pointer; }
+  select:focus, input:focus { border-color: var(--green); }
+  .btn { padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; letter-spacing: 0.5px; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:hover { background: #00c469; }
+  .btn-outline { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
+  .btn-outline:hover { border-color: var(--green); color: var(--green); }
+  .gs-note { font-size: 11px; color: var(--green-dark); background: var(--green-light); border: 1px solid rgba(0,168,90,0.3); border-radius: 6px; padding: 5px 12px; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 0; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; }
+  .tab { padding: 11px 20px; font-size: 13px; font-weight: 600; color: var(--gray); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+  /* ── MAIN LAYOUT ── */
+  .main { padding: 20px 24px; }
+
+  /* ── KPI CARDS ── */
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px; }
+  .kpi-card { background: var(--surface); border-radius: 10px; padding: 14px 16px; box-shadow: var(--shadow); border-top: 3px solid var(--border); }
+  .kpi-card.green { border-top-color: var(--green); }
+  .kpi-card.blue { border-top-color: var(--blue); }
+  .kpi-card.amber { border-top-color: var(--amber); }
+  .kpi-label { font-size: 10px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+  .kpi-val { font-size: 28px; font-weight: 700; color: var(--white); line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--gray); margin-top: 4px; }
+
+  /* ── QUARTILE CARDS ── */
+  .quartile-section { background: var(--surface); border-radius: 10px; padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+  .section-title { font-size: 13px; font-weight: 700; color: var(--white); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .section-title span { color: var(--green); }
+  .q-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .q-card { border-radius: 8px; padding: 14px; text-align: center; }
+  .q-card.q1 { background: var(--red-light); border: 1.5px solid rgba(248,113,113,0.25); }
+  .q-card.q2 { background: var(--amber-light); border: 1.5px solid rgba(251,191,106,0.25); }
+  .q-card.q3 { background: var(--blue-light); border: 1.5px solid rgba(126,200,244,0.25); }
+  .q-card.q4 { background: var(--green-light); border: 1.5px solid rgba(0,168,90,0.3); }
+  .q-name { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+  .q-card.q1 .q-name { color: var(--red); }
+  .q-card.q2 .q-name { color: var(--amber); }
+  .q-card.q3 .q-name { color: var(--blue); }
+  .q-card.q4 .q-name { color: var(--green-dark); }
+  .q-range { font-size: 11px; color: var(--gray); margin-bottom: 8px; }
+  .q-count { font-size: 32px; font-weight: 700; }
+  .q-card.q1 .q-count { color: var(--red); }
+  .q-card.q2 .q-count { color: var(--amber); }
+  .q-card.q3 .q-count { color: var(--blue); }
+  .q-card.q4 .q-count { color: var(--green-dark); }
+  .q-pct { font-size: 11px; color: var(--gray); margin-top: 2px; }
+  .q-action { font-size: 10px; margin-top: 6px; padding: 3px 8px; border-radius: 12px; display: inline-block; }
+  .q-card.q1 .q-action { background: rgba(248,113,113,0.2); color: var(--red); }
+  .q-card.q2 .q-action { background: rgba(251,191,106,0.2); color: var(--amber); }
+  .q-card.q3 .q-action { background: rgba(126,200,244,0.2); color: var(--blue); }
+  .q-card.q4 .q-action { background: rgba(0,168,90,0.2); color: var(--green-dark); }
+
+  /* ── TABLE ── */
+  .table-section { background: var(--surface); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+  .table-header { padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  thead th { background: #061220; color: var(--gray); font-size: 10.5px; font-weight: 700; padding: 10px 12px; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; border-bottom: 1px solid var(--border); }
+  thead th:first-child { text-align: left; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:hover { background: #152d4a; }
+  tbody tr:nth-child(even) { background: var(--surface2); }
+  tbody tr:nth-child(even):hover { background: #152d4a; }
+  td { padding: 9px 12px; font-size: 12px; color: var(--text); text-align: center; white-space: nowrap; }
+  td:first-child { text-align: left; font-weight: 600; color: var(--white); }
+  td.agent-name { min-width: 160px; }
+
+  /* ── SCORE BADGES ── */
+  .score-cell { font-weight: 700; font-size: 13px; }
+  .tier-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+  .tier-destacado { background: rgba(0,168,90,0.2); color: var(--green-dark); border: 1px solid rgba(0,168,90,0.35); }
+  .tier-enmeta { background: rgba(126,200,244,0.15); color: var(--blue); border: 1px solid rgba(126,200,244,0.3); }
+  .tier-cerca { background: rgba(251,191,106,0.15); color: var(--amber); border: 1px solid rgba(251,191,106,0.3); }
+  .tier-atencion { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+  /* ── TL VIEW ── */
+  .tl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .tl-card { background: var(--surface); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+  .tl-header { background: #061220; border-bottom: 1px solid var(--border); padding: 12px 18px; }
+  .tl-name { color: var(--green); font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .tl-meta { color: var(--gray); font-size: 11px; margin-top: 2px; }
+  .tl-body { padding: 14px 18px; }
+  .tl-stat-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .tl-stat { flex: 1; text-align: center; background: var(--surface2); border-radius: 8px; padding: 8px; border: 1px solid var(--border); }
+  .tl-stat-val { font-size: 20px; font-weight: 700; color: var(--white); }
+  .tl-stat-lbl { font-size: 9px; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .mini-q-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+  .mini-q-seg { height: 100%; transition: width 0.3s; }
+
+  /* ── PILLAR WEIGHTS ── */
+  .weights-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .w-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 600; color: var(--text); }
+  .w-pill span { color: var(--green-dark); font-weight: 700; }
+
+  /* ── HIDDEN VIEWS ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── PILLAR SCORE CELL COLORS ── */
+  .p-high { color: var(--green-dark); font-weight: 700; }
+  .p-mid { color: var(--blue); font-weight: 600; }
+  .p-low { color: var(--amber); font-weight: 600; }
+  .p-risk { color: var(--red); font-weight: 700; }
+
+  .search-wrap { position: relative; }
+  .search-wrap input { padding-left: 28px; width: 200px; }
+  .search-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--gray); font-size: 13px; }
+
+  .edit-score { background: var(--surface2); border: 1px dashed var(--border); border-radius: 4px; width: 48px; text-align: center; font-size: 12px; padding: 2px 4px; color: var(--text); }
+  .edit-score:focus { outline: none; border-color: var(--green); background: var(--green-light); }
+
+  .footnote { font-size: 10px; color: var(--text-dim); padding: 10px 20px; font-style: italic; background: var(--surface2); border-top: 1px solid var(--border); }
+
+  /* ── CSAT DETAIL ROW ── */
+  .csat-expand-btn { cursor: pointer; }
+  .csat-expand-btn:hover { opacity: 0.8; }
+  .csat-detail-row td { background: #061d35 !important; padding: 10px 16px 14px !important; }
+  .csat-sub-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 6px; }
+  .csat-sub-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .csat-sub-label { font-size: 9px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; line-height: 1.3; }
+  .csat-sub-raw { font-size: 14px; font-weight: 700; color: var(--white); }
+  .csat-sub-ach { font-size: 10px; color: var(--gray); margin-top: 2px; }
+  .csat-sub-bar { height: 4px; border-radius: 2px; background: var(--border); margin-top: 5px; overflow: hidden; }
+  .csat-sub-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="header-brand">MAJORITY · CS Operations</div>
+    <div class="header-title">Attainment Calculator — July 2026</div>
+  </div>
+  <div class="header-right">
+    Updated: <strong id="lastUpdate">Sample Data</strong><br>
+    <span style="color: var(--green);">●</span> Google Sheets feed active when connected
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="ctrl-group">
+    <label>Team Lead</label>
+    <select id="filterTL" onchange="applyFilters()">
+      <option value="all">All Teams</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Tier</label>
+    <select id="filterTier" onchange="applyFilters()">
+      <option value="all">All Tiers</option>
+      <option value="Destacado">Destacado</option>
+      <option value="En Meta">En Meta</option>
+      <option value="Cerca">Cerca</option>
+      <option value="Atención">Atención</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Channel</label>
+    <select id="filterChannel" onchange="applyFilters()">
+      <option value="all">Chat + Calls</option>
+      <option value="chat">Chat Only</option>
+      <option value="calls">Calls Only</option>
+    </select>
+  </div>
+  <div class="ctrl-group search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search agent..." oninput="applyFilters()">
+  </div>
+  <button class="btn btn-outline" onclick="exportCSV()">⬇ Export CSV</button>
+  <div class="gs-note" title="Expected columns: agent, tl, csat_chat, csat_call, req_call, res_call, req_chat, res_chat, qa, sla, prod, adh">📎 Connect Google Sheet · columns: agent, tl, csat_chat, csat_call, req_call, res_call, req_chat, res_chat, qa, sla, prod, adh</div>
+  <input type="text" id="gsUrl" placeholder="Paste Google Sheet CSV URL..." style="width:280px; font-size:11px;" />
+  <button class="btn btn-green" onclick="loadFromSheet()">Load Sheet</button>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showView('all-agents')">All Agents</div>
+  <div class="tab" onclick="showView('by-tl')">By Team Lead</div>
+  <div class="tab" onclick="showView('quartile')">Quartile View</div>
+</div>
+
+<div class="main">
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi-card green">
+      <div class="kpi-label">Avg Score</div>
+      <div class="kpi-val" id="kpi-avg">—</div>
+      <div class="kpi-sub">out of 100 pts</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Destacado</div>
+      <div class="kpi-val" id="kpi-destacado" style="color:var(--green-dark)">—</div>
+      <div class="kpi-sub">≥ 95 pts</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">En Meta</div>
+      <div class="kpi-val" id="kpi-enmeta" style="color:var(--blue)">—</div>
+      <div class="kpi-sub">85–94 pts</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-label">Cerca</div>
+      <div class="kpi-val" id="kpi-cerca" style="color:var(--amber)">—</div>
+      <div class="kpi-sub">70–84 pts</div>
+    </div>
+    <div class="kpi-card" style="border-top-color:var(--red)">
+      <div class="kpi-label">Atención</div>
+      <div class="kpi-val" id="kpi-atencion" style="color:var(--red)">—</div>
+      <div class="kpi-sub">&lt; 70 pts</div>
+    </div>
+  </div>
+
+  <!-- ═══ VIEW: ALL AGENTS ═══ -->
+  <div id="view-all-agents" class="view active">
+    <div class="table-section">
+      <div class="table-header">
+        <div class="section-title">Agent Attainment <span>· July 2026</span></div>
+        <div class="weights-row">
+          <div class="w-pill">CSAT <span>25%</span></div>
+          <div class="w-pill">QA <span>25%</span></div>
+          <div class="w-pill">SLA <span>20%</span></div>
+          <div class="w-pill">Prod <span>20%</span></div>
+          <div class="w-pill">Adh <span>10%</span></div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="mainTable">
+          <thead>
+            <tr>
+              <th style="text-align:left; min-width:170px;">Agent</th>
+              <th>TL</th>
+              <th>CSAT<br><span style="font-weight:400;font-size:9px">/25</span></th>
+              <th>QA<br><span style="font-weight:400;font-size:9px">/25</span></th>
+              <th>SLA<br><span style="font-weight:400;font-size:9px">/20</span></th>
+              <th>Prod<br><span style="font-weight:400;font-size:9px">/20</span></th>
+              <th>Adh<br><span style="font-weight:400;font-size:9px">/10</span></th>
+              <th>TOTAL<br><span style="font-weight:400;font-size:9px">/100</span></th>
+              <th>Tier</th>
+              <th>Multiplier</th>
+            </tr>
+          </thead>
+          <tbody id="agentTableBody"></tbody>
+        </table>
+      </div>
+      <div class="footnote">* Scores are editable — click any pillar cell to update. Total auto-recalculates. Feed from Google Sheets replaces all values daily.</div>
+    </div>
+  </div>
+
+  <!-- ═══ VIEW: BY TEAM LEAD ═══ -->
+  <div id="view-by-tl" class="view">
+    <div class="tl-grid" id="tl-grid-container"></div>
+  </div>
+
+  <!-- ═══ VIEW: QUARTILE ═══ -->
+  <div id="view-quartile" class="view">
+    <div class="quartile-section" style="margin-bottom:20px">
+      <div class="section-title">Distribution by Bonus Tier <span>· All Agents</span></div>
+      <div class="q-grid">
+        <div class="q-card q1">
+          <div class="q-name">Atención</div>
+          <div class="q-range">&lt; 70 pts</div>
+          <div class="q-count" id="q-atencion-count">—</div>
+          <div class="q-pct" id="q-atencion-pct">agents</div>
+          <div class="q-action">Action Plan</div>
+        </div>
+        <div class="q-card q2">
+          <div class="q-name">Cerca</div>
+          <div class="q-range">70–84 pts</div>
+          <div class="q-count" id="q-cerca-count">—</div>
+          <div class="q-pct" id="q-cerca-pct">agents</div>
+          <div class="q-action">Coaching</div>
+        </div>
+        <div class="q-card q3">
+          <div class="q-name">En Meta</div>
+          <div class="q-range">85–94 pts</div>
+          <div class="q-count" id="q-enmeta-count">—</div>
+          <div class="q-pct" id="q-enmeta-pct">agents</div>
+          <div class="q-action">On Track</div>
+        </div>
+        <div class="q-card q4">
+          <div class="q-name">Destacado</div>
+          <div class="q-range">≥ 95 pts</div>
+          <div class="q-count" id="q-destacado-count">—</div>
+          <div class="q-pct" id="q-destacado-pct">agents</div>
+          <div class="q-action">Exceptional</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Per-TL quartile breakdown (dynamic) -->
+    <div id="tl-quartile-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"></div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  PILLAR WEIGHTS  (each pillar 0–100 → scaled to points)
+// ═══════════════════════════════════════════════════════
+const WEIGHTS = { csat: 25, qa: 25, sla: 20, prod: 20, adh: 10 };
+
+// ═══════════════════════════════════════════════════════
+//  CSAT SUB-METRIC TARGETS  (equal weights: 16.67% each)
+//  Raw input formats:
+//    csat_chat / csat_call  → 0–5.0 scale
+//    req_call / res_call / req_chat / res_chat → 0–100 (%)
+// ═══════════════════════════════════════════════════════
+const CSAT_TARGETS = {
+  csat_chat: { target: 3.75, max: 5.0,  label: 'CSAT Chats',        unit: '/5' },
+  csat_call: { target: 4.60, max: 5.0,  label: 'CSAT Llamadas',     unit: '/5' },
+  req_call:  { target: 95,   max: 100,  label: 'Req Rate Llamadas', unit: '%'  },
+  res_call:  { target: 80,   max: 100,  label: 'Res Rate Llamadas', unit: '%'  },
+  req_chat:  { target: 70,   max: 100,  label: 'Req Rate Chats',    unit: '%'  },
+  res_chat:  { target: 60,   max: 100,  label: 'Res Rate Chats',    unit: '%'  },
+};
+
+// Achievement % per sub-metric (capped at 100)
+function subAch(a, key) {
+  return Math.min(100, (a[key] / CSAT_TARGETS[key].target) * 100);
+}
+
+// Aggregate CSAT score 0–100 (equal weight across 6 sub-metrics)
+function calcCsatScore(a) {
+  const keys = Object.keys(CSAT_TARGETS);
+  const total = keys.reduce((s, k) => s + subAch(a, k), 0);
+  return total / keys.length;
+}
+
+// ═══════════════════════════════════════════════════════
+//  TOTAL SCORE
+// ═══════════════════════════════════════════════════════
+function calcTotal(a) {
+  return Math.round(
+    (calcCsatScore(a) / 100 * WEIGHTS.csat) +
+    (a.qa   / 100 * WEIGHTS.qa)   +
+    (a.sla  / 100 * WEIGHTS.sla)  +
+    (a.prod / 100 * WEIGHTS.prod) +
+    (a.adh  / 100 * WEIGHTS.adh)
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+//  SAMPLE DATA  (58 agents — replace via Google Sheet)
+//  CSAT sub-metrics are sample values only.
+//  Sheet columns: agent, tl, csat_chat, csat_call,
+//                 req_call, res_call, req_chat, res_chat,
+//                 qa, sla, prod, adh
+// ═══════════════════════════════════════════════════════
+function generateSampleData() {
+  const names = [
+    'Andrés Fernando Steven Gonzales Carvajal',
+    'Fausto Andres Felipe Castro Castaño',
+    'Juan David Martinez Baracaldo',
+    'Justin Arley Barrera Gomez',
+    'Laura Natalia Cadavid Velasco',
+    'Lina Julieth Triana Gomez',
+    'Maryori Tatiana Bermudez Caicedo',
+    'Mateo Fajardo Ortegon',
+    'Nelson Alejandro Proaños Acosta',
+    'Pedro Joaquin Lara Martinez',
+    'Santiago Murcia Molano',
+    'Wilmar Stiven Rodríguez Salgado',
+    'Xiomara Gomez Rojas',
+    'Brayan Andres Jaimes Chavarro',
+    'Daniel Alejandro Leiter Cortázar',
+    'David Eduardo Bravo Idrobo',
+    'Johan Sebastian Chaparro Olarte',
+    'Laura Daniela Rodríguez Suárez',
+    'Manuela Roa Arias',
+    'Paula Andrea González Sánchez',
+    'Paula Cifuentes Correa',
+    'William Steeven Montero Cardenas',
+    'Carlos Alfonso Pinzón Castillo',
+    'Daniela Pineda Sánchez',
+    'Derek Martin Navas Poveda',
+    'Jeicob Stiven Murillo Ramos',
+    'Jesús David Guzmán Díaz',
+    'Johnatan Baruc Henriquez Pretel',
+    'Julian Esteban Acosta Oviedo',
+    'Laura Estefania Rodriguez Roldan',
+    'María Alejandra Cardozo Pineda',
+    'Maria Lucia Velásquez Venegas',
+    'Michel Tatiana Rivera Caicedo',
+    'Paula Daniela Patiño Serrano',
+    'Adriana del Pilar Rincón Sotelo',
+    'Ana Milena Parra Lozano',
+    'Carla Maria Beltran Cubides',
+    'David Felipe Medina Blanco',
+    'Derly Tatiana Pedraza Oñate',
+    'Diana Nicoll Angarita Vega',
+    'Gina Milbar Viveros Piñeros',
+    'Jersson Sebastian Lasso Robayo',
+    'Jhoancy Carolina Gonzalez Rivas',
+    'Jhoanny Milagros Coronel Coronel',
+    'Jhonatan Arévalo Trujillo',
+    'Juan Pablo Maldonado Pinillos',
+    'Lirayen Maholly Lugo Gonzalez',
+    'Magda Catalina Barbosa Oviedo',
+    'Silvia Fernanda Montes Rios',
+    'Yurley Valentina Parra Pachon',
+    'Zaira Zuleima Quiroga Pérez',
+    'Fernando Andres Ponguta Mesa',
+    'Jesed Anadelina Amado Rojas',
+    'Sergio Daniel Rincon Rivera',
+    'Willver Ferney Alarcón Cortés',
+  ];
+
+  // [csat_chat/5, csat_call/5, req_call%, res_call%, req_chat%, res_chat%, qa, sla, prod, adh]
+  const sampleScores = [
+    [2.10,2.65,55,46,40,35, 65,60, 0,85],
+    [2.35,3.00,60,50,45,38, 70,65,50,87],
+    [3.08,3.60,78,64,57,50, 85,80,100,93],
+    [3.65,4.35,93,76,68,61, 96,92,80,96],
+    [3.20,3.75,81,67,60,53, 88,84,100,94],
+    [3.00,3.50,76,63,56,49, 83,79,80,92],
+    [2.97,3.45,75,62,55,48, 82,78,100,91],
+    [3.23,3.78,82,68,61,54, 89,85,100,95],
+    [2.78,3.22,70,58,52,45, 78,72,80,90],
+    [2.85,3.30,72,59,53,46, 80,76,80,91],
+    [2.55,2.95,64,53,47,41, 72,68,50,87],
+    [2.70,3.10,68,56,50,44, 75,72,80,89],
+    [3.42,3.95,87,72,64,57, 90,86,80,95],
+    [3.08,3.58,78,64,58,51, 85,81,100,93],
+    [2.93,3.40,74,61,55,48, 81,77,80,91],
+    [3.31,3.85,84,69,62,55, 91,87,100,96],
+    [3.46,4.02,88,73,65,58, 94,91,100,97],
+    [3.27,3.80,83,68,61,54, 90,86,100,95],
+    [3.38,3.93,86,71,64,57, 92,89,100,96],
+    [3.50,4.08,89,74,66,59, 95,92,100,97],
+    [3.31,3.85,88,87,82,76, 94,95,100,98],
+    [3.15,3.67,80,66,59,52, 87,83,100,94],
+    [3.23,3.75,82,68,61,54, 89,85,100,95],
+    [3.38,3.93,86,71,64,57, 93,89,100,96],
+    [3.12,3.62,79,65,58,51, 87,82,100,94],
+    [3.00,3.50,76,63,56,49, 83,79,80,92],
+    [3.72,4.42,94,78,70,63, 98,97,80,99],
+    [3.15,3.67,80,66,59,52, 87,83,100,94],
+    [3.04,3.55,77,63,57,50, 84,80,80,92],
+    [3.27,3.80,83,68,61,54, 90,86,100,95],
+    [3.42,3.98,87,72,64,57, 93,90,100,96],
+    [3.12,3.62,79,65,58,51, 86,82,100,93],
+    [3.34,3.90,85,70,63,56, 91,88,100,96],
+    [3.20,3.72,81,67,60,53, 88,84,100,94],
+    [2.33,2.70,58,48,43,37, 68,64,50,86],
+    [2.85,3.32,72,59,53,46, 79,75,80,91],
+    [2.97,3.45,75,62,55,48, 82,78,100,91],
+    [3.31,3.85,84,69,62,55, 91,87,100,96],
+    [2.89,3.35,73,60,54,47, 80,76,80,91],
+    [2.67,3.08,67,55,49,43, 74,70,80,89],
+    [3.61,4.18,90,75,67,60, 91,88,100,97],
+    [2.93,3.40,74,61,55,48, 81,77,80,91],
+    [3.54,4.12,91,76,68,61, 96,93,100,97],
+    [3.12,3.62,79,65,58,51, 86,82,100,93],
+    [2.82,3.25,71,58,52,45, 78,74,80,90],
+    [3.15,3.67,80,66,59,52, 87,83,100,94],
+    [3.00,3.50,76,63,56,49, 83,79,80,92],
+    [3.12,3.62,79,65,58,51, 86,82,100,93],
+    [3.27,3.80,83,68,61,54, 90,86,100,95],
+    [3.42,3.98,87,72,64,57, 93,90,100,96],
+    [2.85,3.30,72,59,53,46, 79,75,80,90],
+    [3.23,3.75,82,68,61,54, 89,85,100,95],
+    [3.08,3.58,78,64,58,51, 85,81,100,93],
+    [3.46,4.02,88,73,65,58, 94,91,100,97],
+    [2.74,3.18,69,57,51,44, 77,73,80,89],
+  ];
+
+  return names.map((name, i) => {
+    const sc = sampleScores[i] || [2.81,3.68,75,62,55,48,80,80,80,90];
+    const a = {
+      name,
+      tl:        'Sin asignar',
+      csat_chat: sc[0],
+      csat_call: sc[1],
+      req_call:  sc[2],
+      res_call:  sc[3],
+      req_chat:  sc[4],
+      res_chat:  sc[5],
+      qa:        sc[6],
+      sla:       sc[7],
+      prod:      sc[8],
+      adh:       sc[9],
+    };
+    a.total = calcTotal(a);
+    a.tier  = getTier(a.total);
+    return a;
+  });
+}
+
+function getTier(score) {
+  if (score >= 95) return 'Destacado';
+  if (score >= 85) return 'En Meta';
+  if (score >= 70) return 'Cerca';
+  return 'Atención';
+}
+
+function getTierBadge(tier) {
+  const map = { 'Destacado': 'tier-destacado', 'En Meta': 'tier-enmeta', 'Cerca': 'tier-cerca', 'Atención': 'tier-atencion' };
+  return `<span class="tier-badge ${map[tier]}">${tier}</span>`;
+}
+
+function getMultiplier(tier) {
+  const map = { 'Destacado': '1.5x', 'En Meta': '1.0x', 'Cerca': '0.5x', 'Atención': '0x' };
+  return map[tier];
+}
+
+function scoreClass(val, max) {
+  const pct = val / max * 100;
+  if (pct >= 90) return 'p-high';
+  if (pct >= 75) return 'p-mid';
+  if (pct >= 55) return 'p-low';
+  return 'p-risk';
+}
+
+function tlShort(tl) {
+  if (!tl || tl === 'Sin asignar') return '—';
+  const parts = tl.split(' ');
+  return parts.length >= 2 ? parts[0] + ' ' + parts[1][0] + '.' : tl;
+}
+
+function populateTLFilter() {
+  const sel = document.getElementById('filterTL');
+  const tls = [...new Set(allAgents.map(a => a.tl))].sort();
+  // Keep "All Teams" option, rebuild the rest
+  sel.innerHTML = '<option value="all">All Teams</option>' +
+    tls.map(tl => `<option value="${tl}">${tl}</option>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let allAgents = generateSampleData();
+let filteredAgents = [...allAgents];
+
+// ═══════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════
+function render() {
+  populateTLFilter();
+  renderKPIs();
+  renderTable();
+  renderTLView();
+  renderQuartile();
+}
+
+function renderKPIs() {
+  const src = filteredAgents;
+  const avg = src.length ? Math.round(src.reduce((s,a)=>s+a.total,0)/src.length) : 0;
+  document.getElementById('kpi-avg').textContent = avg;
+  document.getElementById('kpi-destacado').textContent = src.filter(a=>a.tier==='Destacado').length;
+  document.getElementById('kpi-enmeta').textContent = src.filter(a=>a.tier==='En Meta').length;
+  document.getElementById('kpi-cerca').textContent = src.filter(a=>a.tier==='Cerca').length;
+  document.getElementById('kpi-atencion').textContent = src.filter(a=>a.tier==='Atención').length;
+}
+
+let _sortedAgents = [];
+
+function renderTable() {
+  const tbody = document.getElementById('agentTableBody');
+  _sortedAgents = [...filteredAgents].sort((a,b) => b.total - a.total);
+  tbody.innerHTML = _sortedAgents.map((a, i) => {
+    const csatAgg    = calcCsatScore(a);
+    const csatPts    = csatAgg / 100 * WEIGHTS.csat;
+    const multColors = { 'Destacado': 'var(--green-dark)', 'En Meta': 'var(--blue)', 'Cerca': 'var(--amber)', 'Atención': 'var(--red)' };
+    return `
+    <tr>
+      <td class="agent-name">${i+1}. ${a.name}</td>
+      <td style="font-size:11px;color:var(--gray)">${tlShort(a.tl)}</td>
+      <td class="${scoreClass(csatPts, WEIGHTS.csat)} csat-expand-btn" onclick="toggleCsatDetail(${i})" title="Click para ver desglose CSAT">
+        ${csatPts.toFixed(1)} <span style="font-size:9px;opacity:0.5">▼</span>
+      </td>
+      <td class="${scoreClass(a.qa * WEIGHTS.qa/100, WEIGHTS.qa)}">${(a.qa/100*WEIGHTS.qa).toFixed(1)}</td>
+      <td class="${scoreClass(a.sla * WEIGHTS.sla/100, WEIGHTS.sla)}">${(a.sla/100*WEIGHTS.sla).toFixed(1)}</td>
+      <td class="${scoreClass(a.prod * WEIGHTS.prod/100, WEIGHTS.prod)}">${(a.prod/100*WEIGHTS.prod).toFixed(1)}</td>
+      <td class="${scoreClass(a.adh * WEIGHTS.adh/100, WEIGHTS.adh)}">${(a.adh/100*WEIGHTS.adh).toFixed(1)}</td>
+      <td class="score-cell" style="font-size:15px">${a.total}</td>
+      <td>${getTierBadge(a.tier)}</td>
+      <td style="font-weight:700;color:${multColors[a.tier]}">${getMultiplier(a.tier)}</td>
+    </tr>
+    <tr id="csat-detail-${i}" class="csat-detail-row" style="display:none">
+      <td colspan="10">${buildCsatDetailHTML(a)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildCsatDetailHTML(a) {
+  const keys = Object.keys(CSAT_TARGETS);
+  const cards = keys.map(k => {
+    const cfg = CSAT_TARGETS[k];
+    const ach = subAch(a, k);
+    const color = ach >= 90 ? 'var(--green-dark)' : ach >= 75 ? 'var(--blue)' : ach >= 55 ? 'var(--amber)' : 'var(--red)';
+    const rawVal = k === 'csat_chat' || k === 'csat_call'
+      ? `${a[k].toFixed(2)}${cfg.unit}`
+      : `${a[k].toFixed(1)}${cfg.unit}`;
+    return `<div class="csat-sub-card">
+      <div class="csat-sub-label">${cfg.label}</div>
+      <div class="csat-sub-raw" style="color:${color}">${rawVal}</div>
+      <div class="csat-sub-ach" style="color:${color}">${ach.toFixed(0)}% meta</div>
+      <div class="csat-sub-bar"><div class="csat-sub-fill" style="width:${ach}%;background:${color}"></div></div>
+    </div>`;
+  }).join('');
+  const csatPts = (calcCsatScore(a) / 100 * WEIGHTS.csat).toFixed(2);
+  return `<div style="padding:2px 4px">
+    <div style="font-size:10px;color:var(--gray);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
+      Desglose CSAT — 6 sub-métricas · peso igual (16.67% c/u) → <span style="color:var(--green-dark)">${csatPts} / 25 pts</span>
+    </div>
+    <div class="csat-sub-grid">${cards}</div>
+  </div>`;
+}
+
+function toggleCsatDetail(idx) {
+  const row = document.getElementById('csat-detail-' + idx);
+  if (!row) return;
+  row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+
+function renderTLView() {
+  const tls = [...new Set(allAgents.map(a => a.tl))].sort();
+  const grid = document.getElementById('tl-grid-container');
+  grid.innerHTML = tls.map(tl => {
+    const agents = allAgents.filter(a => a.tl === tl).sort((a,b)=>b.total-a.total);
+    const n = agents.length;
+    if (!n) return '';
+    const avg = Math.round(agents.reduce((s,a)=>s+a.total,0)/n);
+    const d  = agents.filter(a=>a.tier==='Destacado').length;
+    const em = agents.filter(a=>a.tier==='En Meta').length;
+    const c  = agents.filter(a=>a.tier==='Cerca').length;
+    const at = agents.filter(a=>a.tier==='Atención').length;
+    const safeId = tl.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
+    return `<div class="tl-card">
+      <div class="tl-header">
+        <div class="tl-name">${tl}</div>
+        <div class="tl-meta">Team Lead · ${n} Agent${n!==1?'s':''}</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-stat-row">
+          <div class="tl-stat"><div class="tl-stat-val">${avg}</div><div class="tl-stat-lbl">Avg Score</div></div>
+          <div class="tl-stat" style="border-color:rgba(0,168,90,0.3)"><div class="tl-stat-val" style="color:var(--green-dark)">${d}</div><div class="tl-stat-lbl">Destacado</div></div>
+          <div class="tl-stat" style="border-color:rgba(126,200,244,0.3)"><div class="tl-stat-val" style="color:var(--blue)">${em}</div><div class="tl-stat-lbl">En Meta</div></div>
+          <div class="tl-stat" style="border-color:rgba(251,191,106,0.3)"><div class="tl-stat-val" style="color:var(--amber)">${c}</div><div class="tl-stat-lbl">Cerca</div></div>
+          <div class="tl-stat" style="border-color:rgba(248,113,113,0.3)"><div class="tl-stat-val" style="color:var(--red)">${at}</div><div class="tl-stat-lbl">Atención</div></div>
+        </div>
+        <div class="mini-q-bar" style="margin-bottom:14px">
+          <div class="mini-q-seg" style="width:${at/n*100}%;background:var(--red);opacity:.8"></div>
+          <div class="mini-q-seg" style="width:${c/n*100}%;background:var(--amber);opacity:.8"></div>
+          <div class="mini-q-seg" style="width:${em/n*100}%;background:var(--blue);opacity:.8"></div>
+          <div class="mini-q-seg" style="width:${d/n*100}%;background:var(--green);opacity:.8"></div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+          <thead><tr>
+            <th style="text-align:left;padding:5px 8px;background:#061220;color:var(--gray);font-size:10px;border-bottom:1px solid var(--border)">Agent</th>
+            <th style="padding:5px 8px;background:#061220;color:var(--gray);font-size:10px;border-bottom:1px solid var(--border)">Score</th>
+            <th style="padding:5px 8px;background:#061220;color:var(--gray);font-size:10px;border-bottom:1px solid var(--border)">Tier</th>
+          </tr></thead>
+          <tbody>
+            ${agents.map((a,i)=>`<tr style="border-bottom:1px solid var(--border);background:${i%2?'var(--surface2)':'var(--surface)'}">
+              <td style="padding:5px 8px;color:var(--white);font-weight:600">${a.name}</td>
+              <td style="padding:5px 8px;text-align:center;font-weight:700;color:${a.total>=95?'var(--green-dark)':a.total>=85?'var(--blue)':a.total>=70?'var(--amber)':'var(--red)'}">${a.total}</td>
+              <td style="padding:5px 8px;text-align:center">${getTierBadge(a.tier)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderQuartile() {
+  const n = allAgents.length;
+  const d = allAgents.filter(a=>a.tier==='Destacado').length;
+  const em = allAgents.filter(a=>a.tier==='En Meta').length;
+  const c = allAgents.filter(a=>a.tier==='Cerca').length;
+  const at = allAgents.filter(a=>a.tier==='Atención').length;
+
+  document.getElementById('q-atencion-count').textContent = at;
+  document.getElementById('q-atencion-pct').textContent = `${Math.round(at/n*100)}% of team`;
+  document.getElementById('q-cerca-count').textContent = c;
+  document.getElementById('q-cerca-pct').textContent = `${Math.round(c/n*100)}% of team`;
+  document.getElementById('q-enmeta-count').textContent = em;
+  document.getElementById('q-enmeta-pct').textContent = `${Math.round(em/n*100)}% of team`;
+  document.getElementById('q-destacado-count').textContent = d;
+  document.getElementById('q-destacado-pct').textContent = `${Math.round(d/n*100)}% of team`;
+
+  const tls = [...new Set(allAgents.map(a => a.tl))].sort();
+  const tlQGrid = document.getElementById('tl-quartile-grid');
+  tlQGrid.innerHTML = tls.map(tl => {
+    const agents = allAgents.filter(a => a.tl === tl);
+    const nn = agents.length;
+    if (!nn) return '';
+    const tiers  = ['Destacado','En Meta','Cerca','Atención'];
+    const colors = ['var(--green-dark)','var(--blue)','var(--amber)','var(--red)'];
+    const bars = tiers.map((t,i) => {
+      const cnt = agents.filter(a=>a.tier===t).length;
+      return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:80px;font-size:11px;font-weight:700;color:${colors[i]}">${t}</div>
+        <div style="flex:1;height:22px;background:var(--gray-light);border-radius:4px;overflow:hidden">
+          <div style="width:${cnt/nn*100}%;height:100%;background:${colors[i]};opacity:.8;border-radius:4px;transition:width 0.4s"></div>
+        </div>
+        <div style="width:50px;text-align:right;font-size:13px;font-weight:700;color:${colors[i]}">${cnt} <span style="font-size:10px;color:var(--gray)">(${Math.round(cnt/nn*100)}%)</span></div>
+      </div>`;
+    }).join('');
+    return `<div class="quartile-section">
+      <div class="section-title">${tl} <span>· Team Distribution</span></div>
+      ${bars}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  FILTERS
+// ═══════════════════════════════════════════════════════
+function applyFilters() {
+  const tl = document.getElementById('filterTL').value;
+  const tier = document.getElementById('filterTier').value;
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  filteredAgents = allAgents.filter(a => {
+    if (tl !== 'all' && a.tl !== tl) return false;
+    if (tier !== 'all' && a.tier !== tier) return false;
+    if (search && !a.name.toLowerCase().includes(search)) return false;
+    return true;
+  });
+  renderKPIs();
+  renderTable();
+}
+
+// ═══════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  event.target.classList.add('active');
+  renderKPIs();
+}
+
+// ═══════════════════════════════════════════════════════
+//  GOOGLE SHEETS LOADER
+// ═══════════════════════════════════════════════════════
+function loadFromSheet() {
+  const url = document.getElementById('gsUrl').value.trim();
+  if (!url) { alert('Paste a Google Sheet CSV export URL first.\nExample: https://docs.google.com/spreadsheets/d/YOUR_ID/export?format=csv'); return; }
+
+  fetch(url)
+    .then(r => r.text())
+    .then(csv => {
+      const lines = csv.trim().split('\n');
+      const headers = lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/\s+/g,'_'));
+      allAgents = lines.slice(1).map(line => {
+        const vals = line.split(',');
+        const obj = {};
+        headers.forEach((h,i) => obj[h] = vals[i] ? vals[i].trim() : '');
+        return {
+          name:      obj['agent'] || obj['name'] || obj['nombre'] || '',
+          tl:        obj['tl'] || obj['team_lead'] || obj['supervisor'] || 'Sin asignar',
+          csat_chat: parseFloat(obj['csat_chat']) || 0,
+          csat_call: parseFloat(obj['csat_call']) || 0,
+          req_call:  parseFloat(obj['req_call'])  || 0,
+          res_call:  parseFloat(obj['res_call'])  || 0,
+          req_chat:  parseFloat(obj['req_chat'])  || 0,
+          res_chat:  parseFloat(obj['res_chat'])  || 0,
+          qa:        parseFloat(obj['qa'])   || 0,
+          sla:       parseFloat(obj['sla'])  || 0,
+          prod:      parseFloat(obj['prod'] || obj['productivity']) || 0,
+          adh:       parseFloat(obj['adh']  || obj['adherence'])   || 0,
+        };
+      }).filter(a => a.name);
+      allAgents.forEach(a => { a.total = calcTotal(a); a.tier = getTier(a.total); });
+      filteredAgents = [...allAgents];
+      document.getElementById('lastUpdate').textContent = new Date().toLocaleString('es-CO');
+      render();
+      alert(`✅ Loaded ${allAgents.length} agents from Google Sheet.`);
+    })
+    .catch(e => alert('Could not load sheet. Make sure it is published as CSV and sharing is enabled.\n' + e.message));
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXPORT CSV
+// ═══════════════════════════════════════════════════════
+function exportCSV() {
+  const sorted = [...filteredAgents].sort((a,b)=>b.total-a.total);
+  const header = 'Rank,Agent,TL,CSAT_Pts,CSAT_Chat,CSAT_Call,ReqRate_Call,ResRate_Call,ReqRate_Chat,ResRate_Chat,QA_Pts,SLA_Pts,Prod_Pts,Adh_Pts,Total,Tier,Multiplier\n';
+  const rows = sorted.map((a,i) => {
+    const csatPts = (calcCsatScore(a)/100*WEIGHTS.csat).toFixed(1);
+    return `${i+1},"${a.name}","${a.tl}",${csatPts},${a.csat_chat},${a.csat_call},${a.req_call},${a.res_call},${a.req_chat},${a.res_chat},${(a.qa/100*WEIGHTS.qa).toFixed(1)},${(a.sla/100*WEIGHTS.sla).toFixed(1)},${(a.prod/100*WEIGHTS.prod).toFixed(1)},${(a.adh/100*WEIGHTS.adh).toFixed(1)},${a.total},"${a.tier}","${getMultiplier(a.tier)}"`;
+  }).join('\n');
+  const blob = new Blob([header+rows], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `attainment_july2026_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+render();
+</script>
+</body>
+</html>
